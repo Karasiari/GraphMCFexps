@@ -299,8 +299,8 @@ class GraphMCFexps:
         demands_laplacian = self.demands_laplacian.copy()
 
         # получаем incidence matrix и capacities рёбер
-        incidence_mat = get_incidence_matrix(graph)
-        bandwidth = get_weights(graph)
+        incidence_mat = get_incidence_matrix_for_mcfp(graph)
+        bandwidth = get_weights_for_mcfp(graph)
 
         # определяем переменные потока и гамму
         flow = cp.Variable((len(graph.edges), len(graph.nodes)))
