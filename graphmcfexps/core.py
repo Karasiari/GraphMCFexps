@@ -221,31 +221,29 @@ class GraphMCFexps:
         return edges_in_cut
 
     # ---------- изменения self.graph ----------
-    def remove_edge(self, source: int, target: int, type: str, weight: float = None) -> None:
+    def change_capacity(self, source: int, target: int, type: str, weight: float = None) -> None:
         """
-        Удаление или уменьшение веса ребра графа смежности self.graph
-        type: "delete" или "reduce"
-        weight: насколько уменьшить вес (только для reduce)
+        Удаление или уменьшение/увеличение capacity ребра графа смежности self.graph
+        type: "delete" или "reduce"/"increase"
+        weight: насколько уменьшить/увеличить capacity (только для reduce/increase)
         """
 
         # текущий вес ребра в матрице смежности
         current_weight = self.adjacency_matrix[source, target]
 
-        # ребра нет 
-        if current_weight == 0:
-          return
-
         # удаление ребра
-        if type == "delete":
+        if type == "delete" and current_weight != 0:
           self.adjacency_matrix[source, target] = 0.0
           self.adjacency_matrix[target, source] = 0.0
           
           self.graph.remove_edge(source, target)
-
-        # уменьшение веса
+        
+        # уменьшение capacity
         elif type == "reduce":
           if weight is None:
             raise ValueError("Для reduce необходимо указать параметр weight")
+          elif weight <= 0:
+            raise ValueError("Параметр weight должен быть положительным")
 
           new_weight = current_weight - weight
 
@@ -261,6 +259,27 @@ class GraphMCFexps:
 
             self.graph[source][target]["weight"] = float(new_weight)
 
+        # увеличение capacity
+        elif type == "increase":
+            if weight is None:
+                raise ValueError("Для increase необходимо указать параметр weight")
+            elif weight <= 0:
+                raise ValueError("Параметр weight должен быть положительным")
+
+            new_weight = current_weight + weight
+
+            if current_weight == 0:
+                # ребра не существовало
+                self.adjacency_matrix[source, target] = weight
+                self.adjacency_matrix[target, source] = weight
+
+                self.graph.add_edge(source, target, weight=float(weight))
+            else:
+                self.adjacency_matrix[source, target] = new_weight
+                self.adjacency_matrix[target, source] = new_weight
+
+                self.graph[source][target]["weight"] = float(new_weight)
+        
         else:
           raise ValueError('type должен быть "delete" или "reduce"')
 
