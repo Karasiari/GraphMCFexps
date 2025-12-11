@@ -15,13 +15,13 @@ import cvxpy as cp
 from .instruments import *
 
 class GraphMCFexps:
-    def __init__(self, multigraph: nx.MultiGraph, demands_mutligraph: nx.MultiGraph) -> None:
+    def __init__(self, multigraph: nx.MultiGraph, demands_mutlidigraph: nx.MultiDiGraph) -> None:
         # инициализация
         self.multigraph = multigraph
-        self.demands_multigraph = demands_multigraph
+        self.demands_multidigraph = demands_multidigraph
 
         self.graph = self._aggregate_graph(multigraph, "capacity")
-        self.demands_graph = self._aggregate_graph(demands_multigraph, "weight")
+        self.demands_graph = self._aggregate_graph(demands_multidigraph, "weight")
         self.demands_laplacian = self._get_laplacian(self.demands_graph)
         
         # поскольку граф будет меняться в экспериментах по расширению - храним исходный вариант
@@ -44,7 +44,7 @@ class GraphMCFexps:
         self.gamma: Optional[float] = None
 
     # ---------- базовая подготовка ----------
-    def _aggregate_graph(self, multigraph: nx.MultiGraph, value: str) -> nx.Graph:
+    def _aggregate_graph(self, multigraph, value: str) -> nx.Graph:
         """
         Агрегируем мультиграф в неориентированный граф, где для каждого ребра
         будет сумма value для одного source-target.
