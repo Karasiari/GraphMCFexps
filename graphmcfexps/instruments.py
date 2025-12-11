@@ -9,7 +9,7 @@ def get_incidence_matrix_for_mcfp(graph: nx.DiGraph) -> np.ndarray:
     параметры: nx.DiGraph
     return: incidence_matrix
     """
-    incidence_matrix = nx.incidence_matrix(self, graph, edgelist=graph.edges, oriented=True)
+    incidence_matrix = nx.incidence_matrix(graph, edgelist=graph.edges, oriented=True)
     incidence_matrix = incidence_matrix.toarray()
     return incidence_matrix
 
