@@ -10,6 +10,10 @@ import scipy
 from scipy.linalg import fractional_matrix_power
 from scipy.sparse.linalg import eigsh
 
+import cvxpy as cp
+
+from .instruments import *
+
 class GraphMCFexps:
     def __init__(self, adjacency_matrix: np.ndarray, demands_matrix: np.ndarray) -> None:
         # инициализация
@@ -34,6 +38,9 @@ class GraphMCFexps:
         # последние посчитанные разрезы self.graph
         self.mincut: Optional[np.ndarray] = None
         self.cut_alpha: Optional[np.ndarray] = None
+
+        # последнее рассчитанное gamma для MCFP
+        self.gamma: Optional[float] = None
 
     # ---------- базовая подготовка ----------
     def _validate_matrices(self) -> None:
@@ -274,3 +281,44 @@ class GraphMCFexps:
           A[v, u] = w
 
         self.adjacency_matrix = A
+
+    # ---------- решения основных задач на графе ----------
+    
+    # MCFP (gamma)
+    def solve_mcfp(self, **solver_kwargs) -> float:
+        """
+        Решение задачи максимального пропускного потока на графе self.graph + self.demands_graph с использованием CVXPY.
+        solver_kwargs: параметры для solver.solve(), такие как методы решения и точность.
+        return: gamma
+        """
+        # копируем граф и преобразуем его в ориентированный
+        graph = self.graph.copy()
+        graph = nx.DiGraph(graph)
+
+        # получаем incidence matrix и capacities рёбер
+        incidence_mat = get_incidence_matrix(graph)
+        bandwidth = get_weights(graph)
+
+        # определяем переменные потока и гамму
+        flow = cp.Variable((len(graph.edges), len(graph.nodes)))
+        gamma = cp.Variable()
+
+        # определяем задачу
+        prob = cp.Problem(
+            cp.Maximize(gamma),
+            [
+                cp.sum(flow, axis=1) <= bandwidth,
+                incidence_mat @ flow == -gamma * graph_exps.laplacian.T,  # используем laplacian из GraphMCFexps
+                flow >= 0,
+                gamma >= 0,
+            ]
+        )
+
+        # решаем задачу
+        prob.solve(**solver_kwargs)
+
+        if prob.status != "optimal":
+            gamma = None
+
+        self.gamma = gamma
+        return gamma
