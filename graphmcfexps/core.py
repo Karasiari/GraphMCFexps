@@ -295,6 +295,9 @@ class GraphMCFexps:
         graph = self.graph.copy()
         graph = nx.DiGraph(graph)
 
+        # копируем лапласиан запросов
+        demands_laplacian = self.demands_laplacian.copy()
+
         # получаем incidence matrix и capacities рёбер
         incidence_mat = get_incidence_matrix(graph)
         bandwidth = get_weights(graph)
@@ -308,7 +311,7 @@ class GraphMCFexps:
             cp.Maximize(gamma),
             [
                 cp.sum(flow, axis=1) <= bandwidth,
-                incidence_mat @ flow == -gamma * graph_exps.laplacian.T,  # используем laplacian из GraphMCFexps
+                incidence_mat @ flow == -gamma * demands_laplacian.T,
                 flow >= 0,
                 gamma >= 0,
             ]
