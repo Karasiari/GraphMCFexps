@@ -15,7 +15,7 @@ import cvxpy as cp
 from .instruments import *
 
 class GraphMCFexps:
-    def __init__(self, multigraph: nx.MultiGraph, demands_mutlidigraph: nx.MultiDiGraph) -> None:
+    def __init__(self, multigraph: nx.MultiGraph, demands_multidigraph: nx.MultiDiGraph) -> None:
         # инициализация
         self.multigraph = multigraph
         self.demands_multidigraph = demands_multidigraph
