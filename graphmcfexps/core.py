@@ -15,16 +15,17 @@ import cvxpy as cp
 from .instruments import *
 
 class GraphMCFexps:
-    def __init__(self, adjacency_matrix: np.ndarray, demands_matrix: np.ndarray) -> None:
+    def __init__(self, multigraph: nx.MultiGraph, demands_mutligraph: nx.MultiGraph) -> None:
         # инициализация
-        self.adjacency_matrix = np.array(adjacency_matrix, dtype=float)
-        self.demands_matrix = np.array(demands_matrix, dtype=float)
-        self._validate_matrices()
-        self.graph = self._create_networkx_graph(self.adjacency_matrix)
-        self.n = self.graph.number_of_nodes()
-        self.demands_graph = self._create_networkx_graph(self.demands_matrix)
+        self.multigraph = multigraph
+        self.demands_multigraph = demands_multigraph
+
+        self.graph = self._aggregate_graph(multigraph, "capacity")
+        self.demands_graph = self._aggregate_graph(demands_multigraph, "weight")
         self.demands_laplacian = self._get_laplacian(self.demands_graph)
+        
         # поскольку граф будет меняться в экспериментах по расширению - храним исходный вариант
+        self.mutltigraph_initial = self.multigraph.copy()
         self.graph_initial = self.graph.copy()
 
         # последние вычисленные alpha и "усредненная" L_alpha
@@ -43,30 +44,21 @@ class GraphMCFexps:
         self.gamma: Optional[float] = None
 
     # ---------- базовая подготовка ----------
-    def _validate_matrices(self) -> None:
-        A = self.adjacency_matrix
-        D = self.demands_matrix
-        if A.ndim != 2 or A.shape[0] != A.shape[1]:
-            raise ValueError("Матрица смежности должна быть квадратной")
-        if D.ndim != 2 or D.shape[0] != D.shape[1]:
-            raise ValueError("Матрица корреспонденций должна быть квадратной")
-        if not np.allclose(A, A.T):
-            raise ValueError("Матрица смежности должна быть симметричной (неориентированный граф)")
-        if (A < 0).any():
-            raise ValueError("Capacity рёбер должно быть неотрицательным")
-        if A.shape[0] != D.shape[0]:
-          raise ValueError("Матрица смежности и матрица корреспонденций разных размеров")
-
-    def _create_networkx_graph(self, matrix) -> nx.Graph:
-        A = matrix
-        n = A.shape[0]
+    def _aggregate_graph(self, multigraph: nx.MultiGraph, value: str) -> nx.Graph:
+        """
+        Агрегируем мультиграф в неориентированный граф, где для каждого ребра
+        будет сумма value для одного source-target.
+        """
         G = nx.Graph()
-        G.add_nodes_from(range(n))
-        for i in range(n):
-            for j in range(i + 1, n):
-                w = A[i, j]
-                if w:
-                    G.add_edge(i, j, weight=float(w))
+
+        for u, v, data in multigraph.edges(data=True):
+            weight = data[value]
+
+            if G.has_edge(u, v):
+                G[u][v]['weight'] += weight
+            else:
+                G.add_edge(u, v, weight=weight)
+
         return G
 
     def _get_laplacian(self, graph) -> np.ndarray:
@@ -82,7 +74,7 @@ class GraphMCFexps:
         self.graph_pinv_sqrt = fractional_matrix_power(Lg_pinv, 0.5)
         return self.graph_pinv_sqrt
 
-    # ---------- визуализация ----------
+    # ---------- визуализация немультиграфов ----------
     def visualise(self, version="initial", title="Граф смежности", node_size=300, font_size=10) -> None:
         if version == "current":
           graph = self.graph
@@ -220,86 +212,57 @@ class GraphMCFexps:
 
         return edges_in_cut
 
-    # ---------- изменения self.graph ----------
-    def change_capacity(self, source: int, target: int, type: str, weight: float = None) -> None:
+    # ---------- изменения self.multigraph ----------
+    def change_multiedge(self, source: int, target: int, type: str, key: int = None, capacity: float = None) -> None:
         """
-        Удаление или уменьшение/увеличение capacity ребра графа смежности self.graph
-        type: "delete" или "reduce"/"increase"
-        weight: насколько уменьшить/увеличить capacity (только для reduce/increase)
+        Удаление или добавление мультиребра мультиграфа смежности self.multigraph
+        type: "delete" или "insert"
+        key: значение ключа удаляемого мультиребра (только для delete)
+        capacity: значение capacity нового мультиребра (только для insert)
         """
 
-        # текущий вес ребра в матрице смежности
-        current_weight = self.adjacency_matrix[source, target]
+        if type == "delete":
+          if key is None:
+            raise ValueError("Для delete необходимо указать key удаляемого мультиребра")
 
-        # удаление ребра
-        if type == "delete" and current_weight != 0:
-          self.adjacency_matrix[source, target] = 0.0
-          self.adjacency_matrix[target, source] = 0.0
-          
-          self.graph.remove_edge(source, target)
-        
-        # уменьшение capacity
-        elif type == "reduce":
-          if weight is None:
-            raise ValueError("Для reduce необходимо указать параметр weight")
-          elif weight <= 0:
-            raise ValueError("Параметр weight должен быть положительным")
-
-          new_weight = current_weight - weight
-
-          if new_weight <= 0:
-            # по факту delete
-            self.adjacency_matrix[source, target] = 0.0
-            self.adjacency_matrix[target, source] = 0.0
-
-            self.graph.remove_edge(source, target)
+          edge_data = self.multigraph.get_edge_data(source, target, key=key)
+          if edge_data:
+              capacity_to_decrease = edge_data["capacity"]
+              self.multigraph.remove_edge(source, target, key=key)
+              current_capacity = self.graph.get_edge_data(source, target)["weight"]
+              new_capacity = current_capacity - capacity_to_decrease
+              if new_capacity > 0:
+                  self.graph[source][target]["weight"] = float(new_capacity)
+              else:
+                  self.graph.remove_edge(source, target)
           else:
-            self.adjacency_matrix[source, target] = new_weight
-            self.adjacency_matrix[target, source] = new_weight
+              print(f"Удаляемое мультиребро ({source}, {target}, {key}) не найдено")
 
-            self.graph[source][target]["weight"] = float(new_weight)
-
-        # увеличение capacity
         elif type == "increase":
-            if weight is None:
-                raise ValueError("Для increase необходимо указать параметр weight")
-            elif weight <= 0:
-                raise ValueError("Параметр weight должен быть положительным")
+            if capacity is None:
+                raise ValueError("Для increase необходимо указать параметр capacity")
+            elif capacity <= 0:
+                raise ValueError("Параметр capacity должен быть положительным")
 
-            new_weight = current_weight + weight
+            self.multigraph.add_edge(source, target, capacity=capacity)
 
-            if current_weight == 0:
-                # ребра не существовало
-                self.adjacency_matrix[source, target] = weight
-                self.adjacency_matrix[target, source] = weight
-
-                self.graph.add_edge(source, target, weight=float(weight))
+            if self.graph.get_edge_data(source, target):
+                current_capacity = self.graph.get_edge_data(source, target)["weight"]
+                new_capacity = current_capacity + capacity
+                self.graph[source][target]["weight"] = float(new_capacity)
             else:
-                self.adjacency_matrix[source, target] = new_weight
-                self.adjacency_matrix[target, source] = new_weight
-
-                self.graph[source][target]["weight"] = float(new_weight)
+                self.graph.add_edge(source, target, weight=float(capacity))
         
         else:
-          raise ValueError('type должен быть "delete" или "reduce"/"increase"')
+          raise ValueError('type должен быть "delete" или "increase"')
 
     def restore_graph(self) -> None:
         """
-        Восстановление self.graph из self.graph_initial
+        Восстановление self.multigraph из self.multigraph_initial
         """
 
+        self.multigraph = self.multigraph_initial.copy()
         self.graph = self.graph_initial.copy()
-
-        # восстанавливаем self.adjacency_matrix
-        n = self.n
-        A = np.zeros((n, n), dtype=float)
-
-        for u, v, data in self.graph.edges(data=True):
-          w = float(data.get("weight", 1.0))
-          A[u, v] = w
-          A[v, u] = w
-
-        self.adjacency_matrix = A
 
     # ---------- решения основных задач на графе ----------
     
