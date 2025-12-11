@@ -1,6 +1,8 @@
 import numpy as np
 import networkx as nx
 
+from common_classes import *
+
 # вспомогательные функции для MCFP (Maximum Concurrent Flow Problem)
 
 def get_incidence_matrix_for_mcfp(graph: nx.DiGraph) -> np.ndarray:
@@ -22,3 +24,5 @@ def get_capacities_for_mcfp(graph: nx.DiGraph) -> np.ndarray:
     edges_with_weights = [(edge, data['weight']) for edge, data in graph.edges.items()]
     edges_with_weights_dict = {key: value for key, value in edges_with_weights}
     return np.array(list(edges_with_weights_dict.values()), dtype=np.float64)
+
+# вспомогательные функции для целочисленного MCF (Multi Commodity Flow)
