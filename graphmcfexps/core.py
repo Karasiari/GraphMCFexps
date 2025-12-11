@@ -281,7 +281,7 @@ class GraphMCFexps:
                 self.graph[source][target]["weight"] = float(new_weight)
         
         else:
-          raise ValueError('type должен быть "delete" или "reduce"')
+          raise ValueError('type должен быть "delete" или "reduce"/"increase"')
 
     def restore_graph(self) -> None:
         """
