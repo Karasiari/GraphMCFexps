@@ -1,8 +1,6 @@
 import numpy as np
 import networkx as nx
 
-from common_classes import *
-
 # вспомогательные функции для MCFP (Maximum Concurrent Flow Problem)
 
 def get_incidence_matrix_for_mcfp(graph: nx.DiGraph) -> np.ndarray:
