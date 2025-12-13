@@ -57,7 +57,7 @@ def copy_and_filter_graph(flow_graph, demand_capacity):
 
 
 # Function to group demands by their source and sink, save demand indices, and create a mapping from i to source-target pair
-def group_demands_and_create_mapping(demands, unsatisfied_demands: Set[int]):
+def group_demands_and_create_mapping(demands, unsatisfied_demands: set):
     grouped_demands = []
     demand_indices_by_group = defaultdict(list)
     i_to_source_target = {}
