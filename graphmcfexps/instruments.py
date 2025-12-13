@@ -212,7 +212,7 @@ def subdivide_flows_by_paths(flow, demand_indices_by_group, ungrouped_demands, i
 
         # Sort demands by capacity in descending order
         #sorted_demand_indices = sorted(demand_indices, key=lambda idx: ungrouped_demands[idx].capacity, reverse=True)
-        sorted_demands_indices = demand_indices
+        sorted_demand_indices = demand_indices
 
         # Process each demand in descending order of capacity
         for demand_index in sorted_demand_indices:
