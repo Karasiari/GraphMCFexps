@@ -352,6 +352,6 @@ class GraphMCFexps:
         # Combine the satisfied demands
         satisfied_demands += remaining_satisfied_demands
         flow_paths.update(remaining_paths)
-        solved = unsatisfied_subset == satisfied_demands
+        solved = unsatisfied_subset == set(satisfied_demands)
 
         return flow_paths, satisfied_demands, solved
