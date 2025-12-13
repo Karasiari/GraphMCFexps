@@ -43,6 +43,12 @@ class GraphMCFexps:
         # последнее рассчитанное gamma для MCFP
         self.gamma: Optional[float] = None
 
+        # максимальная capacity мультиребра self.multigraph для MCF
+        self.C_max = max([data["capacity"]: for _, _, data in self.multigraph.edges(data=True)])
+
+        # флаг - решилось ли последнее MCF
+        self.mcf_solved: Optional[bool] = None
+
     # ---------- базовая подготовка ----------
     def _aggregate_graph(self, multigraph, value: str) -> nx.Graph:
         """
@@ -312,7 +318,7 @@ class GraphMCFexps:
         return gamma
 
     # MCF (проложенные запросы, индексы проложенных запросов, флаг - проложились ли все запросы)
-    def solve_mcf(self, C_max, eps=0.1):
+    def solve_mcf(self, eps=0.1):
         # Step 0: Get right representation for demands
         demands = []
         index, unsatisfied_subset = 0, set()
@@ -329,10 +335,10 @@ class GraphMCFexps:
         G_copy = G.copy()
         
         # Step 2: Run the multicommodity flow procedure to generate the flow and l(e) values
-        flow = multi_commodity_flow(G_copy, grouped_demands, C_max, eps)
+        flow = multi_commodity_flow(G_copy, grouped_demands, self.C_max, eps)
 
         # Step 3: Scale the flow to make it feasible (ensures flows respect edge capacities)
-        scale_flows(flow, G_copy, C_max)
+        scale_flows(flow, G_copy, self.C_max)
 
         # Step 4: Subdivide flows by paths for ungrouped demands
         flow_paths, satisfied_demands = subdivide_flows_by_paths(flow, demand_indices_by_group, demands,
@@ -353,5 +359,6 @@ class GraphMCFexps:
         satisfied_demands += remaining_satisfied_demands
         flow_paths.update(remaining_paths)
         solved = unsatisfied_subset == set(satisfied_demands)
+        self.mcf_solved = solved
 
         return flow_paths, satisfied_demands, solved
