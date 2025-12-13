@@ -3,9 +3,6 @@ from collections import defaultdict
 import numpy as np
 import networkx as nx
 
-# глобальное capacity мультиребра для нашей задачи MCF всегда 1, вес любого demand тоже 1
-C_MAX = 1.0
-
 # вспомогательный класс для demands для входа в наш алгоритм решения MCF
 class Demand:
     def __init__(self, source: int, sink: int, capacity: float):
@@ -125,27 +122,27 @@ def update_l_on_path(G, path, eps):
 
 
 # Main flow procedure
-def multi_commodity_flow(G, grouped_demands, eps=0.1):
+def multi_commodity_flow(G, grouped_demands, C_max, eps=0.1):
     # Initialize l(e)
-    initialize_l(G, C_MAX, eps)
+    initialize_l(G, C_max, eps)
 
     # Initialize flow structures (separate for each commodity flow)
     flow = {i: defaultdict(float) for i in range(len(grouped_demands))}
     iter_max = G.number_of_edges()
     iter_num = 0
-    while D(G, C_MAX) < 1 and iter_num < iter_max:
+    while D(G, C_max) < 1 and iter_num < iter_max:
         iter_num += 1
         for i, demand in enumerate(grouped_demands):
             source, sink = demand.source, demand.sink
             d_i = demand.capacity
 
             # While D(l) < 1 and there is remaining demand to route
-            while D(G, C_MAX) < 1 and d_i > 0:
+            while D(G, C_max) < 1 and d_i > 0:
                 # Find the shortest path based on current l(e)
                 path = shortest_path_with_l(G, source, sink)
 
                 # Set u_flow = min(C_max, d_i)
-                u_flow = min(C_MAX, d_i)
+                u_flow = min(C_max, d_i)
 
                 # Augment the flow along the path and reduce remaining demand
                 for u, v, key in path:
@@ -160,13 +157,13 @@ def multi_commodity_flow(G, grouped_demands, eps=0.1):
 
 
 # Function to scale the flow to make it feasible
-def scale_flows(flow, G):
+def scale_flows(flow, G, C_max):
     # Find the maximum sum of flows on any edge
     max_over_capacity = 1
     for u, v, key in G.edges(keys=True):
-        G[u][v][key]['capacity'] = C_MAX
+        G[u][v][key]['capacity'] = C_max
         total_flow = sum(f.get((u, v, key), 0) for f in flow.values())
-        max_over_capacity = max(max_over_capacity, total_flow / C_MAX)
+        max_over_capacity = max(max_over_capacity, total_flow / C_max)
 
     # If the maximum over-capacity ratio is more than 1, scale the flow
     if max_over_capacity > 1:
