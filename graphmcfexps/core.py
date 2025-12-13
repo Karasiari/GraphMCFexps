@@ -50,6 +50,7 @@ class GraphMCFexps:
         будет сумма value для одного source-target.
         """
         G = nx.Graph()
+        G.add_nodes_from(range(multigraph.number_of_nodes()))
 
         for u, v, data in multigraph.edges(data=True):
             weight = data[value]
