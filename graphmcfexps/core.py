@@ -312,7 +312,7 @@ class GraphMCFexps:
         return gamma
 
     # MCF (проложенные запросы, индексы проложенных запросов, флаг - проложились ли все запросы)
-    def solve_mcf(self, eps=0.1):
+    def solve_mcf(self, C_max, eps=0.1):
         # Step 0: Get right representation for demands
         demands = []
         index, unsatisfied_subset = 0, set()
@@ -329,10 +329,10 @@ class GraphMCFexps:
         G_copy = G.copy()
         
         # Step 2: Run the multicommodity flow procedure to generate the flow and l(e) values
-        flow = multi_commodity_flow(G_copy, grouped_demands, eps)
+        flow = multi_commodity_flow(G_copy, grouped_demands, C_max, eps)
 
         # Step 3: Scale the flow to make it feasible (ensures flows respect edge capacities)
-        scale_flows(flow, G_copy)
+        scale_flows(flow, G_copy, C_max)
 
         # Step 4: Subdivide flows by paths for ungrouped demands
         flow_paths, satisfied_demands = subdivide_flows_by_paths(flow, demand_indices_by_group, demands,
