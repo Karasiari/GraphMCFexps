@@ -44,7 +44,7 @@ class GraphMCFexps:
         self.gamma: Optional[float] = None
 
         # максимальная capacity мультиребра self.multigraph для MCF
-        self.C_max = max([data["capacity"]: for _, _, data in self.multigraph.edges(data=True)])
+        self.C_max = max([data["capacity"] for _, _, data in self.multigraph.edges(data=True)])
 
         # флаг - решилось ли последнее MCF
         self.mcf_solved: Optional[bool] = None
