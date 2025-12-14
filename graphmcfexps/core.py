@@ -245,9 +245,9 @@ class GraphMCFexps:
           else:
               print(f"Удаляемое мультиребро ({source}, {target}, {key}) не найдено")
 
-        elif type == "increase":
+        elif type == "insert":
             if capacity is None:
-                raise ValueError("Для increase необходимо указать параметр capacity")
+                raise ValueError("Для insert необходимо указать параметр capacity")
             elif capacity <= 0:
                 raise ValueError("Параметр capacity должен быть положительным")
 
@@ -261,7 +261,7 @@ class GraphMCFexps:
                 self.graph.add_edge(source, target, weight=float(capacity))
         
         else:
-          raise ValueError('type должен быть "delete" или "increase"')
+          raise ValueError('type должен быть "delete" или "insert"')
 
     def restore_graph(self) -> None:
         """
