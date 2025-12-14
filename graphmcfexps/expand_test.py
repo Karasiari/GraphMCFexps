@@ -6,7 +6,7 @@ from .core import *
 # вспомогательные функции для теста по расширению сети
 
 def get_available_types() -> list[str]:
-  return ["initial", "alpha", "min_cut", "min_Lalpha_cut", "random", "betweenness_unweighted"]
+  return ["initial", "alpha", "random", "min_cut", "min_Lalpha_cut", "betweenness_unweighted"]
 
 def get_edges_by_alpha(graph: GraphMCFexps, k: int, pref: str):
   pref_edges = graph.generate_cut(type=pref)
