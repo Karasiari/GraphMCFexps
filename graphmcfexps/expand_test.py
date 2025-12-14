@@ -39,7 +39,7 @@ def expand_network_test(additional_capacities: list[float], graph: GraphMCFexps,
     if alpha_type is None:
       raise ValueError(f'Для type="alpha" необходимо передать значение alpha_type для предварительной выборки ребер из разреза')
 
-    edges_with_alphas = get_edges_by_alpha(graph, number_to_add, pref="min")
+    edges_with_alphas = get_edges_by_alpha(graph, number_to_add, pref=alpha_type)
 
     source_target_sequence = [(source, target) for source, target, alpha in edges_with_alphas]
     sequences_to_edges(source_target_sequence, additional_capacities, graph)
