@@ -308,11 +308,15 @@ class GraphMCFexps:
 
         # решаем задачу
         prob.solve(**solver_kwargs)
-
         if prob.status != "optimal":
             gamma = None
-            
         gamma = gamma.value if gamma is not None else None
+        while gamma is None:
+            prob.solve(**solver_kwargs)
+            if prob.status != "optimal":
+                gamma = None
+            gamma = gamma.value if gamma is not None else None
+        
         self.gamma = gamma
         
         return gamma
