@@ -8,6 +8,11 @@ from .core import *
 def get_available_types() -> list[str]:
   return ["initial", "alpha", "random", "min_cut", "min_Lalpha_cut", "betweenness_unweighted"]
 
+def get_number_in_mincut(graph: GraphMCFexps, pref: str):
+  pref_edges = graph.generate_cut(type=pref)
+  number_in_mincut = len(pref_edges)
+  return number_in_mincut
+
 def get_edges_by_alpha(graph: GraphMCFexps, k: int, pref: str):
   pref_edges = graph.generate_cut(type=pref)
   if len(pref_edges) < k:
