@@ -307,16 +307,23 @@ class GraphMCFexps:
         )
 
         # решаем задачу
+        max_tries = 5
+        
         prob.solve(**solver_kwargs)
+        max_gamma = gamma.value
+        try = 1
         if prob.status != "optimal":
             gamma = None
         gamma = gamma.value if gamma is not None else None
-        while gamma is None:
+        while gamma is None and try <= 5:
             prob.solve(**solver_kwargs)
+            max_gamma = max(max_gamma, gamma.value)
+            try += 1
             if prob.status != "optimal":
                 gamma = None
             gamma = gamma.value if gamma is not None else None
-        
+
+        gamma = gamma if gamma is not None else max_gamma
         self.gamma = gamma
         
         return gamma
