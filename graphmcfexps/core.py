@@ -309,7 +309,10 @@ class GraphMCFexps:
         # решаем задачу
         max_for_tries = 5
         
-        prob.solve(**solver_kwargs)
+        try:
+            prob.solve(solver='CLARABEL', **solver_kwargs)
+        except SolverError:
+            prob.solve(solver='ECOS', **solver_kwargs)
         gamma = gamma.value if gamma is not None else None
         max_gamma = gamma
         current_try = 1
