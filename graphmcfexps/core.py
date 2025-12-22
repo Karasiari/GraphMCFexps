@@ -11,6 +11,7 @@ from scipy.linalg import fractional_matrix_power
 from scipy.sparse.linalg import eigsh
 
 import cvxpy as cp
+from cvxpy import SolverError
 
 from .instruments import *
 
