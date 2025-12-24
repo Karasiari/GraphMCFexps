@@ -26,8 +26,8 @@ class GraphMCFexps:
         self.demands_laplacian = self._get_laplacian(self.demands_graph)
         
         # поскольку граф будет меняться в экспериментах по расширению - храним исходный вариант
-        self.multigraph_initial = self.multigraph.copy(deep=True)
-        self.graph_initial = self.graph.copy(deep=True)
+        self.multigraph_initial = self.multigraph.copy()
+        self.graph_initial = self.graph.copy()
 
         # последние вычисленные alpha и "усредненная" L_alpha
         self.alpha: Optional[float] = None
@@ -269,8 +269,8 @@ class GraphMCFexps:
         Восстановление self.multigraph из self.multigraph_initial
         """
 
-        self.multigraph = self.multigraph_initial.copy(deep=True)
-        self.graph = self.graph_initial.copy(deep=True)
+        self.multigraph = self.multigraph_initial.copy()
+        self.graph = self.graph_initial.copy()
 
     # ---------- решения основных задач на графе ----------
     
