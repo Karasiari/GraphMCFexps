@@ -275,7 +275,7 @@ class GraphMCFexps:
     # ---------- решения основных задач на графе ----------
     
     # MCFP (gamma)
-    def solve_mcfp(self, **solver_kwargs) -> float:
+    def solve_mcfp(self, solver_flag: bool = False, **solver_kwargs) -> float:
         """
         Решение задачи максимального пропускного потока на графе self.graph + self.demands_graph с использованием CVXPY.
         solver_kwargs: параметры для solver.solve(), такие как методы решения и точность.
@@ -309,11 +309,14 @@ class GraphMCFexps:
 
         # решаем задачу
         max_for_tries = 5
-        
-        try:
+
+        if not solver_flag:
+            try:
+                prob.solve(solver='CLARABEL', **solver_kwargs)
+            except SolverError:
+                prob.solve(solver='ECOS', **solver_kwargs)
+        else:
             prob.solve(solver='CLARABEL', **solver_kwargs)
-        except SolverError:
-            prob.solve(solver='ECOS', **solver_kwargs)
         gamma = gamma.value if gamma is not None else None
         max_gamma = gamma
         current_try = 1
