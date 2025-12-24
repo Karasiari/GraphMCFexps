@@ -323,7 +323,13 @@ class GraphMCFexps:
         if prob.status != "optimal":
             gamma = None
         while gamma is None and (current_try <= 5 or max_gamma is None):
-            prob.solve(**solver_kwargs)
+            if not solver_flag:
+                try:
+                    prob.solve(solver='CLARABEL', **solver_kwargs)
+                except SolverError:
+                    prob.solve(solver='ECOS', **solver_kwargs)
+            else:
+                prob.solve(solver='CLARABEL', **solver_kwargs)
             if max_gamma is not None and gamma is not None:
                 max_gamma = max(max_gamma, gamma.value)
             elif max_gamma is None and gamma is not None:
