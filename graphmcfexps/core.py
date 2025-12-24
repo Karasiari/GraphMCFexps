@@ -310,10 +310,12 @@ class GraphMCFexps:
         # решаем задачу
         max_for_tries = 5
 
+        solver_error = False
         if not solver_flag:
             try:
                 prob.solve(solver='CLARABEL', **solver_kwargs)
             except SolverError:
+                solver_error = True
                 prob.solve(solver='ECOS', **solver_kwargs)
         else:
             prob.solve(solver='CLARABEL', **solver_kwargs)
@@ -324,9 +326,15 @@ class GraphMCFexps:
             gamma = None
         while gamma is None and (current_try <= 5 or max_gamma is None):
             if not solver_flag:
-                try:
-                    prob.solve(solver='CLARABEL', **solver_kwargs)
-                except SolverError:
+                if not solver_error:
+                    try:
+                        prob.solve(solver='CLARABEL', **solver_kwargs)
+                    except SolverError:
+                        solver_error = True
+                        current_try = 1
+                        max_gamma, gamma = None, None
+                        prob.solve(solver='ECOS', **solver_kwargs)
+                else:
                     prob.solve(solver='ECOS', **solver_kwargs)
             else:
                 prob.solve(solver='CLARABEL', **solver_kwargs)
